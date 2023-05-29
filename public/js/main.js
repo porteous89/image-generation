@@ -1,4 +1,6 @@
-function onSubmit(e) {
+document.querySelector("#image-form").addEventListener("submit", onSubmit);
+
+async function onSubmit(e) {
   e.preventDefault();
 
   document.querySelector(".msg").textContent = "";
@@ -36,13 +38,12 @@ async function generateImageRequest(prompt, size) {
     }
 
     const data = await response.json();
-    // console.log(data);
-
     const imageUrl = data.data;
 
-    document.querySelector("#image").src = imageUrl;
+    const ipfsHash = await uploadImageToIpfs(imageUrl);
 
-    // Enable the "Mint" button
+    document.querySelector("#image").src = `https://ipfs.io/ipfs/${ipfsHash}`;
+
     document.querySelector("#mint-button").disabled = false;
 
     removeSpinner();
@@ -59,18 +60,23 @@ function removeSpinner() {
   document.querySelector(".spinner").classList.remove("show");
 }
 
-document.querySelector("#image-form").addEventListener("submit", onSubmit);
+async function uploadImageToIpfs(imageUrl) {
+  const response = await fetch("/ipfs/upload-to-ipfs", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ imageUrl }),
+  });
 
-// Retrieve the generated avatar image URL
-async function retrieveGeneratedAvatarUrl() {
-  // Replace this with your code to retrieve the generated avatar image URL
-  // You might have a function or method that generates the URL
-  // Example:
-  const generatedAvatarUrl = document.querySelector("#image").src;
-  return generatedAvatarUrl;
+  if (!response.ok) {
+    throw new Error("Error uploading file to IPFS");
+  }
+
+  const data = await response.json();
+  return data.ipfsHash;
 }
 
-// Mint the NFT using the generated avatar image URL
 document.addEventListener("DOMContentLoaded", function () {
   const mintButton = document.getElementById("mint-button");
 
@@ -105,3 +111,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 });
+
+async function retrieveGeneratedAvatarUrl() {
+  const generatedAvatarUrl = document.querySelector("#image").src;
+  return generatedAvatarUrl;
+}
