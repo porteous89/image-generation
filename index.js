@@ -17,4 +17,10 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/openai", require("./routes/openaiRoutes"));
 app.use("/ipfs", require("./routes/ipfsRoutes")); // add this line
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Server error');
+});
+
 app.listen(port, () => console.log(`Server started on port ${port}`));
